@@ -58,6 +58,9 @@ class BaseNotifier:
     def photo(self, path, caption=""):
         return None
 
+    def ping(self, username=""):
+        return None
+
     def flush_updates(self):
         return None
 
@@ -111,6 +114,8 @@ class TelegramNotifier(BaseNotifier):
             )
             if response.status_code >= 400:
                 self._log_failed_response("发送消息", response)
+            else:
+                print(f"✅ Telegram 发送消息成功: HTTP {response.status_code}")
         except Exception as e:
             print(f"❌ Telegram 发送消息异常: {type(e).__name__}: {e}")
 
@@ -127,8 +132,15 @@ class TelegramNotifier(BaseNotifier):
                 )
                 if response.status_code >= 400:
                     self._log_failed_response("发送图片", response)
+                else:
+                    print(f"✅ Telegram 发送图片成功: HTTP {response.status_code}")
         except Exception as e:
             print(f"❌ Telegram 发送图片异常: {type(e).__name__}: {e}")
+
+    def ping(self, username=""):
+        if not self.ok:
+            return
+        self.send(f"🔔 <b>ClawCloud 自动登录任务已开始</b>\n\n<b>用户:</b> {username}\n<b>通知:</b> Telegram")
 
     def flush_updates(self):
         """刷新 offset 到最新，避免读到旧消息"""
@@ -246,6 +258,8 @@ class DiscordNotifier(BaseNotifier):
             )
             if response.status_code >= 400:
                 self._log_failed_response("发送消息", response)
+            else:
+                print(f"✅ Discord 发送消息成功: HTTP {response.status_code}")
         except Exception as e:
             print(f"❌ Discord 发送消息异常: {type(e).__name__}: {e}")
 
@@ -264,8 +278,15 @@ class DiscordNotifier(BaseNotifier):
                 )
                 if response.status_code >= 400:
                     self._log_failed_response("发送图片", response)
+                else:
+                    print(f"✅ Discord 发送图片成功: HTTP {response.status_code}")
         except Exception as e:
             print(f"❌ Discord 发送图片异常: {type(e).__name__}: {e}")
+
+    def ping(self, username=""):
+        if not self.ok:
+            return
+        self.send(f"🔔 **ClawCloud 自动登录任务已开始**\n\n**用户:** {username}\n**通知:** Discord")
 
     def flush_updates(self):
         """记录当前频道最后一条消息，避免读到旧的 /code"""
@@ -936,6 +957,7 @@ class AutoLogin:
         self.log(f"密码: {'有' if self.password else '无'}")
         self.log(f"登录入口: {LOGIN_ENTRY_URL}")
         self.log(f"通知渠道: {self.notifier.display_name} ({'已启用' if self.notifier.ok else '未启用'})")
+        self.notifier.ping(self.username)
         
         if not self.username or not self.password:
             self.log("缺少凭据", "ERROR")
